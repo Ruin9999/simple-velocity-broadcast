@@ -40,7 +40,7 @@ public class SimpleBroadcastCommand implements SimpleCommand {
         }
 
         source.sendMessage(Component.text("Broadcasted message to " + playerCount + " players."));
-        logger.info("{}broadcasted: {}", source.toString(), messageString);
+        logger.info("{}broadcasted: {}", source, messageString);
     }
 
     @Override
