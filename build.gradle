@@ -3,10 +3,22 @@ plugins {
     id 'eclipse'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.8'
     id("xyz.jpenilla.run-velocity") version "2.3.1"
+    id "com.modrinth.minotaur" version "2.+"
 }
 
 group = 'dev.shunjieyong'
 version = '1.0-SNAPSHOT'
+
+modrinth {
+    token = System.getenv("modrinth-token")
+    projectId = 'simple-velocity-broadcast'
+    versionNumber = '0.1.0'
+    versionType = 'beta'
+    uploadFile = jar
+    gameVersions = ["1.21.5"]
+    loaders = ["velocity"]
+    syncBodyFrom = rootProject.file("README.md").text
+}
 
 repositories {
     mavenCentral()
