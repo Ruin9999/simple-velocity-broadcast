@@ -1,0 +1,92 @@
+name: Minecraft Publish
+run-name: ${{github.actor}} is publishing the mod/plugin.
+on:
+  workflow_dispatch:
+    inputs:
+      tag: # Define an input field for the tag name.
+        description: 'The Git tag (e.g. 1.0.0) to build and publish.'
+        required: true
+        type: string
+      release-type:
+        description: 'Type of release label (e.g. Release, Beta, Alpha, Hotfix).'
+        required: false
+        type: string
+        default: 'Release'
+
+jobs:
+  build_and_publish: # Referenced from https://github.com/steves-underwater-paradise/restart-server/blob/main/.github/workflows/publish.yml
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write # Gemini recommended this, I'm not too sure what this will do.
+    steps:
+      # Get repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Get mod version from Gradle
+      - name: Get mod version from gradle
+        uses: madhead/read-java-properties@latest
+        id: mod_version
+        with:
+          file: gradle.properties
+          property: mod_version
+          default: 0.0.1
+
+      # Get supported minecraft versions from Gradle
+      - name: Get supported Minecraft versions from Gradle
+        uses: madhead/read-java-properties@latest
+        id: mc_version
+        with:
+          file: gradle.properties
+          property: supported_minecraft_versions
+          default: 0.0.1
+
+      - name: Logging version string
+        run: echo version string ${{ steps.mod_version.outputs.value }}+mc${{ steps.mc_version.outputs.value }}
+
+      # Set up Java
+      - name: Set up JDK (Temurin 21)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      # Setup Gradle and validate wrappers.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Change Gradle wrapper permissions
+      - name: Change Gradle wrapper permissions
+        run: chmod +x gradlew
+
+      # Execute Gradle build
+      - name: Execute Gradle build
+        run: ./gradlew build
+
+      # Publish
+      - name: Publish to Modrinth, CurseForge and Github Releases.
+        uses: Kira-NT/mc-publish@v3.3.0
+        with:
+          version: ${{ github.event.inputs.tag || github.ref_name }}
+          version-type: ${{ github.event.inputs.release-type || github.ref_name }}
+          changelog: |
+            Release Notes for version ${{ github.event.inputs.tag || github.ref_name }}.
+            Type: ${{ github.event.inputs.release-type }}.
+
+          # Modrinth releases
+          modrinth-id: 4zx17gOc
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          # Curseforge releases
+          # Curseforge doesn't support velocity plugins I think, so I'm not uploading it there.
+
+          # Github releases
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          files: |
+            build/libs/!(*-@(dev|sources|javadoc)).jar
+            build/libs/*-@(dev|sources|javadoc).jar
+
+          loaders:
