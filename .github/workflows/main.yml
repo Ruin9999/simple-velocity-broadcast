@@ -88,3 +88,6 @@ jobs:
           files: |
             build/libs/!(*-@(dev|sources|javadoc)).jar
             build/libs/*-@(dev|sources|javadoc).jar
+    
+          loaders: |
+            fabric
